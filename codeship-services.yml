@@ -5,3 +5,21 @@ diag-app:
     encrypted_args_file: sshkey.args.encrypted
   cached: true
   encrypted_env_file: credentials.env.encrypted
+  volumes:
+  - ./tmp:/build
+
+diag-cli:
+  image: 496698360409.dkr.ecr.us-west-2.amazonaws.com/diag-cli
+  environment:
+  - DIAG_HOST=https://d2.diag.ai
+  - DIAG_TOKEN=22.LsuNtfm0KT4D
+  - AWS_DEFAULT_REGION=us-west-2
+  dockercfg_service: dockercfg_generator
+  encrypted_env_file: credentials.env.encrypted
+  volumes:
+  - ./tmp:/build
+
+dockercfg_generator:
+  image: codeship/aws-ecr-dockercfg-generator
+  add_docker: true
+  encrypted_env_file: credentials.env.encrypted
