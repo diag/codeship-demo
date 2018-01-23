@@ -1,0 +1,33 @@
+language: node_js
+nodejs:
+- '8'
+addons:
+  apt:
+    packages:
+    - jq
+env:
+  global:
+  - DIAG_HOST=https://demo.diag.ai
+  - secure: hvQ7xIByNF6znH4QtwQXkCPf2aiiCr1UiLkWJaoAA/EzxjcWLyuMsd6pCGUqeZQol37L9f2oIN4wYtcGV0EGd5KrCFtqZaBfDTApQVLxfNLQLeQzL2MU+FWkFazL76RoNMTap3/GmhvvsI+tDIY+qOtYyk1/V5zzftlcLF8rQ+bDUDelyTjcOGW/CGRnJxEkh+8SWzmGqN+wRcGldhBHUcSjpUUlBq/RfJezQK+gxwG8JnQRmD1ZSH+WLuonjvorQEm4uV4y72oKBBsN585oXkcRpQukwNz8hESTT9SHlBHCzmbef3L0s2f7c2MOoantjmPwd2tMXpitvx92kZazxcmfpCpJ+37tHj3/QgxJ/GM4HYht35KFy8pXNuqLKW40n6amdZDlwREU3giub1Avmoi5JMdVzj+5wkzlSJvoNGdqmvvFexZrjRcwIKsloUceFP24HwIqSm5IaIN9yTqgdIUYHlzKaEGMT5XKkf7GKL6oj6oR87jT4juznaGzJD9pkDhTg4cfMDASNcx5xWcbKm2WgfKpDB2iViXtnTBsv2NtDe+Of+QnO8j2b6tgCBvg0rpFM7oNPsbKGeeP8YEy/qeewWNqFrH5hT1MB+V+/VzAP3Ja10XBn/darlvnj0slXo5N2anuKvJzDHFjexYY5rb/rf7QsztmEh0BeoguRAs=
+before_install:
+- mkdir -p /tmp/logs
+install:
+- set -o pipefail && npm install -g diag@latest 2>&1 | tee /tmp/logs/diag_install.log
+script:
+- set -o pipefail && npm install 2>&1 | tee /tmp/logs/npm_install.log
+- set -o pipefail && npm run test 2>&1 | tee /tmp/logs/test.log
+- set -o pipefail && npm run build 2>&1 | tee /tmp/logs/build.log
+after_failure:
+- > 
+  diag mkds --space cidemo --name "Build failed: ${TRAVIS_REPO_SLUG:-missing_repo_name} Build
+  ${TRAVIS_BUILD_NUMBER:--1}" --desc "${TRAVIS_COMMIT_MESSAGE:-missing_commit_message}"
+  -j > /tmp/dataset.json
+- cat /tmp/dataset.json | jq -r '. | "d/\(.id.space_id)/\(.id.item_id)"' > /tmp/dataset_id
+- diag cp /tmp/logs --name logs.zip $(cat /tmp/dataset_id)
+- diag cp /home/travis/build/diag/ci-demo --name source.zip --gitignore $(cat /tmp/dataset_id)
+- mkdir /tmp/log_annotate
+- diag cp $(cat /tmp/dataset_id) /tmp/log_annotate
+- diag annotate --dataset $(cat /tmp/dataset_id) "npm ERR" /tmp/log_annotate/logs.zip
+notifications:
+  slack:
+    secure: SgtRpa1JNoxv+ZRTsIab2Neyic4sjVqhpTJZ54RW5NmjPImie82ZG+/w2gHtTEHAPNUR3gD01FYIIMY0ftJilMG1Uq37exWxQZXSDpGud99Pc2mSxhDagOqrclx6cuL6lHeFWdSeU/1s+1IfKYBEmgsaFdx0+ugn3nQG4b4oHZUEdHo3qlY0GQJCongHSrr21KyUlRSb9l8quhXdqRbc+U9HI84/lIsqb7rgwzev1ZgB4MB8TpjcaqNOy5AtuBMyrvUfijs1dWDEbM6o8Kk9wpuz4Q4i1xpzrHNmt5z3g5IRsNEeJpmmh8g6RaWVTYtw1dKxXKZW7Kt+H3Bh1+3eDam8pxgp/NCYFSvpU+00eFQsIDGd5Cq0abNMob3pLQoaz1nzf6YEcfAapQA9ss64WXsGPkWdB9jQ6LrnUwX7MUpIaXTrwHPajR8hOlKUYKEYPtp4vGNksSZMP0ENih8odBnijNo75v8kj5DUtLGqXb3JSECWB85p+RYiy1Tr4/Up1LbP+U/I3zaW6VwiBnpid4GHnBUZOLLTnldLh1eXb+uINuHMb6qr+pV/LegoD2/smrFolu2RWNKWiGZMJa1FL/Tp499MTDt6IXLq0xzQcNVMCHUJXdULp/7gZIZQMIqykh4UCT59oXxTQmbnhoY4CwSx2Zo352mu0hBz0GVwwvw=

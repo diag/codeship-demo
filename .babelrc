@@ -1,0 +1,24 @@
+{
+  "presets": [ "react" ],
+  "plugins": [ "transform-object-rest-spread" ],
+  "env": {
+    "development": {
+      "presets": ["env", "react-hmre"]
+    },
+    "test": {
+      "presets": [
+        [
+          "env",
+          {
+            "targets": {
+              "node": "current"
+            }
+          }
+        ]
+      ]
+    },
+    "production": {
+      "presets": ["env", "react"]
+    }
+  }
+}

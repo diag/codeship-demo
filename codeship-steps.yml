@@ -1,0 +1,5 @@
+- service: diag-app
+  command: npm install && npm run test
+- type: on_fail
+  service: diag-app
+  command: onfail.sh
