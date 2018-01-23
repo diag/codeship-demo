@@ -1,7 +1,7 @@
 - service: diag-app
-  command: cp /src/onfail.sh /build
+  command: cp /src/onfail.sh /build && mkdir -p /build/logs
 - service: diag-app
-  command: 'bash -o pipefail -c "npm install && npm run test 2>&1 | tee /build/install_and_test.log"'
+  command: 'bash -o pipefail -c "npm install && npm run test 2>&1 | tee /build/logs/install_and_test.log"'
   on_fail:
     - service: diag-cli
       command: bash /build/onfail.sh
